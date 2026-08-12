@@ -60,6 +60,24 @@ app.put("/api/tasks/:id", (req, res) => {
     res.json(task);
 });
 
+app.delete("/api/tasks/:id", (req, res) => {
+    const id = Number(req.params.id);
+
+    const taskExists = tasks.some((task) => task.id === id);
+
+    if(!taskExists){
+        return res.status(404).json({
+            error: "Task not found"
+        });
+    }
+
+    tasks = tasks.filter((task) => task.id !== id);
+
+    res.json({
+        message: "Task deleted successfully"
+    });
+});
+
 app.post("/api/tasks", (req, res) => {
     const {text, category } = req.body;
 
