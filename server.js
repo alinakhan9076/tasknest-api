@@ -20,6 +20,27 @@ app.get("/api/tasks", (req,res) => {
     res.json(tasks);
 });
 
+app.post("/api/tasks", (req, res) => {
+    const {text, category } = req.body;
+
+    if (!text) {
+        return res.status(400).json({
+            error: "Text is required"
+        });
+    }
+
+    const task = {
+        id: nextId++,
+        text: text,
+        done: false,
+        category: category || "personal"
+    };
+
+    tasks.push(task);
+
+    res.status(201).json(task);
+});
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
