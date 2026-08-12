@@ -34,6 +34,32 @@ app.get("/api/tasks/:id", (req, res) => {
     res.json(task);
 })
 
+app.put("/api/tasks/:id", (req, res) => {
+    const id = Number(req.params.id);
+
+    const task = tasks.find((t) => t.id === id);
+
+    if (!task) {
+        return res.status(404).json({
+            error: "Task not found"
+        });
+    }
+
+    const { text, category, done } = req.body;
+
+    if (!text) {
+        return res.status(400).json({
+            error: "Text is required"
+        });
+    }
+
+    task.text = text;
+    task.category = category || task.category;
+    task.done = done ?? task.done;
+
+    res.json(task);
+});
+
 app.post("/api/tasks", (req, res) => {
     const {text, category } = req.body;
 
@@ -54,6 +80,8 @@ app.post("/api/tasks", (req, res) => {
 
     res.status(201).json(task);
 });
+
+
 
 const PORT = process.env.PORT || 5000;
 
