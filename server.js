@@ -9,8 +9,15 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+let tasks = [];
+let nextId = 1;
+
 app.get("/api/health", (req,res) => {
     res.json({status: "ok"});
+});
+
+app.get("/api/tasks", (req,res) => {
+    res.json(tasks);
 });
 
 const PORT = process.env.PORT || 5000;
