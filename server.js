@@ -30,7 +30,7 @@ app.get("/api/tasks", async (req,res) => {
         res.json(tasks);
     } catch (error) {
         res.status(500).json({
-            error: "Failed to fetch tasks"
+            error: "Failed to fetch tasks",
         });
     }
    
@@ -42,18 +42,23 @@ app.get("/api/tasks/:id", async (req, res) => {
 
         if (!task) {
             return res.status(404).json({
-                error: "Task not found"
+                error: "Task not found",
             });
         }
 
         res.json(task);
     } catch (error) {
+        if (error.name === "CastError") {
+            return res.status(400).json({
+                error: "Invalid task id",
+            });
+        }
+    
         res.status(500).json({
-            error: "Failed to fetch task"
+            error: "Failed to fetch task",
         });
     }
-    
-});
+})
 
 app.post("/api/tasks", async (req, res) => {
     try {
@@ -61,11 +66,15 @@ app.post("/api/tasks", async (req, res) => {
 
         res.status(201).json(task);
     } catch (error) {
-        res.status(400).json({
-            error: error.message
+        if (error.name === "ValidationError") {
+            return res.status(400).json({
+                error: error.message,
+            });
+        }
+        res.status(500).json({
+            error: "Failed to create task",
         });
     }
-   
 });
 
 app.put("/api/tasks/:id", async (req, res) => {
@@ -75,20 +84,31 @@ app.put("/api/tasks/:id", async (req, res) => {
             req.body,
             {
                 new: true,
-                runValidators: true
+                runValidators: true,
             }
         );
 
         if (!task) {
             return res.status(404).json({
-                error: "Task not found"
+                error: "Task not found",
             });
         }
 
         res.json(task);
     } catch (error) {
-        res.status(400).json({
-            error: error.mesage
+        if (error.name === "CastError") {
+            return res.status(400).json({
+                error: "Invalid task id",
+            });
+        }
+        
+        if (error.name === "ValidationError") {
+            return res.status(400).json({
+                error: error.message,
+            })
+        }
+        res.status(500).json({
+            error: "Failed to update task",
         });
     }
 });
@@ -99,19 +119,23 @@ app.delete("/api/tasks/:id", async (req, res) => {
 
         if (!task) {
             return res.status(404).json({
-                error: "Task not found"
+                error: "Task not found",
             });
         }
 
         res.json({
-            message: "Task deleted successfully"
+            message: "Task deleted successfully",
         });
     } catch (error) {
-        res.status(400).json({
-            error: error.message
+        if (error.name === "CastError") {
+            return res.status(400).json({
+                error: "Invalid task id",
+            });
+        }
+        res.status(500).json({
+            error: "Failed to delete task",
         });
     }
-   
 });
 
 const PORT = process.env.PORT || 5000;
