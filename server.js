@@ -3,6 +3,9 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const Task = require("./models/Task");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const User = require("./models/User");
 
 dotenv.config();
 mongoose.connect(process.env.MONGO_URI)
@@ -134,6 +137,105 @@ app.delete("/api/tasks/:id", async (req, res) => {
         }
         res.status(500).json({
             error: "Failed to delete task",
+        });
+    }
+});
+
+app.post("/api/auth/register", async (req, res) => {
+    try {
+        const {email, password} = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({
+                error: "Email and password are required",
+            });
+        }
+
+        if (password.length < 8) {
+            return res.status(400).json({
+                error: "Password must be at least 8 characters",
+            });
+        }
+
+        const existingUser = await User.findOne({ email });
+
+        if (existingUser) {
+            return res.status(409).json({
+                error: "Email already registered",
+            });
+        }
+
+        const user = await User.create({
+            email, password,
+        });
+
+        const token = jwt.sign(
+            { id: user._id }, 
+            process.env.JWT_SECRET,
+            { expiresIn: "7d"}
+        );
+
+        res.status(201).json({
+            token,
+            user: {
+                id: user._id,
+                email: user.email,
+            },
+        });
+    } catch (error) {
+        console.error("REGISTER ERROR", error);
+        res.status(500).json({
+            error: "Failed to register user",
+        });
+    }
+});
+
+
+app.post("/api/auth/login", async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({
+                error: "Email and password are required",
+            });
+        }
+
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(401).json({
+                error: "Invalid credentials",
+            });
+        }
+
+        const passwordMatches = await bcrypt.compare(
+            password,
+            user.password
+        );
+
+        if (!passwordMatches) {
+            return res.status(401).json({
+                error: "Invalid credentials",
+            });
+        }
+
+        const token = jwt.sign(
+            { id: user._id },
+            process.env.JWT_SECRET,
+            { expiresIn: "7d"}
+        );
+
+        res.json({
+            token,
+            user: {
+                id: user._id,
+                email: user.email,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: "Failed to login",
         });
     }
 });
