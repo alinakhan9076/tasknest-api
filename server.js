@@ -6,6 +6,7 @@ const Task = require("./models/Task");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("./models/User");
+const authMiddleware = require("./middleware/auth");
 
 dotenv.config();
 mongoose.connect(process.env.MONGO_URI)
@@ -26,9 +27,13 @@ app.get("/api/health", (req,res) => {
     res.json({status: "ok"});
 });
 
+app.use("/api/tasks", authMiddleware);
+
 app.get("/api/tasks", async (req,res) => {
     try {
-        const tasks = await Task.find();
+        const tasks = await Task.find({
+            userId: req.user.id
+        });
 
         res.json(tasks);
     } catch (error) {
@@ -41,7 +46,10 @@ app.get("/api/tasks", async (req,res) => {
 
 app.get("/api/tasks/:id", async (req, res) => {
     try {
-        const task = await Task.findById(req.params.id);
+        const task = await Task.findOne({
+            _id: req.params.id,
+            userId: req.user.id
+        });
 
         if (!task) {
             return res.status(404).json({
@@ -65,7 +73,10 @@ app.get("/api/tasks/:id", async (req, res) => {
 
 app.post("/api/tasks", async (req, res) => {
     try {
-        const task = await Task.create(req.body);
+        const task = await Task.create({
+            ...req.body,
+            userId: req.user.id
+        });
 
         res.status(201).json(task);
     } catch (error) {
@@ -82,9 +93,15 @@ app.post("/api/tasks", async (req, res) => {
 
 app.put("/api/tasks/:id", async (req, res) => {
     try {
-        const task = await Task.findByIdAndUpdate(
-            req.params.id,
-            req.body,
+        const task = await Task.findOneAndUpdate({
+            _id: req.params.id,
+            userId: req.user.id
+        },
+        {
+             text,
+            category,
+            done
+        },
             {
                 new: true,
                 runValidators: true,
@@ -118,7 +135,10 @@ app.put("/api/tasks/:id", async (req, res) => {
 
 app.delete("/api/tasks/:id", async (req, res) => {
     try {
-        const task = await Task.findByIdAndDelete(req.params.id);
+        const task = await Task.findOneAndDelete({
+            _id: req.params.id,
+            userId: req.user.id
+        });
 
         if (!task) {
             return res.status(404).json({
