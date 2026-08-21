@@ -97,6 +97,9 @@ app.post("/api/tasks", async (req, res) => {
 
 app.put("/api/tasks/:id", async (req, res) => {
     try {
+
+        const { text, category, done } = req.body;
+        
         const task = await Task.findOneAndUpdate({
             _id: req.params.id,
             userId: req.user.id
