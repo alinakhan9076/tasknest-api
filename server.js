@@ -21,7 +21,11 @@ mongoose.connect(process.env.MONGO_URI)
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+
+const allowedOrigin = process.env.CLIENT_URL || "http://localhost:5173";
+app.use(cors({
+    origin: allowedOrigin,
+}));
 
 app.get("/api/health", (req,res) => {
     res.json({status: "ok"});
